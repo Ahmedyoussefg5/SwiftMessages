@@ -527,22 +527,23 @@ open class SwiftMessages {
     }
     
     fileprivate func dequeueNext() {
-        guard self._current == nil, queue.count > 0 else { return }
-        let current = queue.removeFirst()
+        guard self._current != queue.last,queue.count > 0 else { return }
+        let current = queue.last
         self._current = current
         // Set `autohideToken` before the animation starts in case
         // the dismiss gesture begins before we've queued the autohide
         // block on animation completion.
         self.autohideToken = current
-        current.showDate = Date()
+        current?.showDate = Date()
         DispatchQueue.main.async { [weak self] in
             guard let strongSelf = self else { return }
             do {
-                try current.show { completed in
+                try current?.show { completed in
                     guard let strongSelf = self else { return }
                     guard completed else {
                         strongSelf.messageQueue.sync {
-                            strongSelf.internalHide(id: current.id)
+                            guard let id = current?.id else { return }
+                            strongSelf.internalHide(id: id)
                         }
                         return
                     }
